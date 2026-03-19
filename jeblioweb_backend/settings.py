@@ -17,8 +17,6 @@ import dj_database_url
 from corsheaders.defaults import default_headers
 
 
-ALLOWED_HOSTS = ['*']
-
 # 🔥 ADD THIS
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -35,9 +33,6 @@ SECRET_KEY = 'django-insecure-&!us87dl317l9h^*7)7^kjztz^m(2i3l+9w$k%riy5h2qsrr=r
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -154,7 +149,7 @@ EMAIL_HOST_USER = 'jeblioinfo@gmail.com'
 EMAIL_HOST_PASSWORD = 'hnpv jtgs mybp jrdw'
 
 ALLOWED_HOSTS = [
-    "jeblio-backend.onrender.com",
+    "jeblio-website-backend.onrender.com",
     "jeblio-website.onrender.com",
 ]
 
