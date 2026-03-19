@@ -49,9 +49,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'jeblioweb_backend.middleware.CorsMiddlewareFix',
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware', 
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -148,9 +147,6 @@ EMAIL_HOST_PASSWORD = 'hnpv jtgs mybp jrdw'
 
 from corsheaders.defaults import default_headers
 
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "ngrok-skip-browser-warning",
-]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
@@ -161,4 +157,27 @@ CORS_ALLOWED_ORIGINS = [
 ALLOWED_HOSTS = [
     "jeblio-backend.onrender.com",
     "jeblio-website.onrender.com",
+]
+
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://jeblio-website.onrender.com",
 ]
