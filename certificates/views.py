@@ -68,3 +68,28 @@ class DownloadReportView(APIView):
             return Response({"error": "File not found"}, status=404)
 
         return FileResponse(open(file_path, "rb"), as_attachment=True)
+    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Certificate
+from .serializers import CertificateSerializer
+
+
+class CertificateVerifyView(APIView):
+
+    def get(self, request, cert_id):
+        try:
+            certificate = Certificate.objects.get(cert_id=cert_id)
+            serializer = CertificateSerializer(certificate)
+
+            return Response({
+                "status": "valid",
+                "data": serializer.data
+            })
+
+        except Certificate.DoesNotExist:
+            return Response({
+                "status": "invalid",
+                "message": "Certificate not found"
+            }, status=status.HTTP_404_NOT_FOUND)

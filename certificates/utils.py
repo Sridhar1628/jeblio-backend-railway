@@ -5,6 +5,7 @@ import os
 from django.conf import settings
 import yagmail
 from datetime import timedelta, datetime
+from certificates.models import Certificate
 
 
 # ======================
@@ -126,8 +127,8 @@ def process_certificates(excel_file_path):
             project = str(row["project"])
             email = str(row["email"])
 
-            start_date = pd.to_datetime(row["start_date"])
-            end_date = pd.to_datetime(row["end_date"])
+            start_date = pd.to_datetime(row["start_date"]).date()
+            end_date = pd.to_datetime(row["end_date"]).date()
 
             cert_id = str(row["cert_id"])
 
@@ -195,6 +196,19 @@ def process_certificates(excel_file_path):
             # ======================
             qr_img = Image.open(qr_path).resize((220, 220)).convert("RGB")
             img.paste(qr_img, (width - 260, height - 330))
+
+            Certificate.objects.update_or_create(
+                cert_id=cert_id,
+                defaults={
+                    "name": name,
+                    "email": email,
+                    "domain": domain,
+                    "project": project,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "issue_date": issue_date,
+                }
+            )
 
             # ======================
             # SAVE PDF
