@@ -13,7 +13,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
-import os
+
+from corsheaders.defaults import default_headers
+
+
+ALLOWED_HOSTS = ['*']
+
+# 🔥 ADD THIS
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -145,15 +153,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'jeblioinfo@gmail.com'
 EMAIL_HOST_PASSWORD = 'hnpv jtgs mybp jrdw'
 
-from corsheaders.defaults import default_headers
-
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://jeblio-website.onrender.com",
-]
-
 ALLOWED_HOSTS = [
     "jeblio-backend.onrender.com",
     "jeblio-website.onrender.com",
@@ -180,4 +179,13 @@ CORS_ALLOW_METHODS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://jeblio-website.onrender.com",
+    "https://jeblio-website-backend.onrender.com",
 ]
+
+
+
+CORS_ALLOWED_ORIGINS = [
+    "https://jeblio-website.onrender.com",
+]
+
+CORS_ALLOW_CREDENTIALS = True
