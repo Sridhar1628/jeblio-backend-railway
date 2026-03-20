@@ -191,3 +191,80 @@ class UpdateApplicationStatusView(APIView):
 class InternshipApplicationListView(ListAPIView):
     queryset = InternshipApplication.objects.all().order_by('-created_at')
     serializer_class = InternshipApplicationSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import InternshipApplication
+
+
+# ======================
+# DELETE APPLICATION
+# ======================
+class DeleteApplicationView(APIView):
+
+    def delete(self, request, pk):
+        try:
+            application = InternshipApplication.objects.get(pk=pk)
+        except InternshipApplication.DoesNotExist:
+            return Response(
+                {"error": "Application not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        application.delete()
+
+        return Response(
+            {"message": "Application deleted successfully"},
+            status=status.HTTP_200_OK
+        )
+    
+# views.py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.utils import timezone
+from .models import ApplicationCounter
+
+
+@api_view(['GET'])
+def get_application_count(request):
+    try:
+        counter = ApplicationCounter.objects.get(id=1)
+    except ApplicationCounter.DoesNotExist:
+        return Response({"count": 100})
+
+    now = timezone.now()
+
+    # ✅ STOP at deadline
+    if now > counter.end_time:
+        now = counter.end_time
+
+    # Total time passed
+    time_diff = (now - counter.start_time).total_seconds()
+
+    # Which interval (30 mins = 1800 sec)
+    interval_index = int(time_diff // 1800)
+
+    total = counter.base_count
+
+    # ✅ Add completed intervals
+    for i in range(interval_index):
+        if i < len(counter.increments):
+            total += counter.increments[i]
+
+    # ✅ Add current interval (smooth growth)
+    if interval_index < len(counter.increments):
+        current_total = counter.increments[interval_index]
+
+        seconds_in_current = time_diff % 1800
+
+        # progress ratio (0 → 1)
+        progress = seconds_in_current / 1800
+
+        partial_growth = current_total * progress
+
+        total += int(partial_growth)
+
+    return Response({
+        "count": int(total)
+    })

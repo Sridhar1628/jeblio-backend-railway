@@ -39,7 +39,7 @@ INSTALLED_APPS = [
 
     'certificates',
     'users',
-    'internships',
+    'internships.apps.InternshipsConfig',
     'services',
     'projects',
 ]
