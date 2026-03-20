@@ -14,7 +14,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-
 ALLOWED_HOSTS = [
     "jeblio-website-backend.onrender.com",
     "jeblio-website.onrender.com",
