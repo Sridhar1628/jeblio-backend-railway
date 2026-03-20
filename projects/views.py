@@ -1,14 +1,19 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.mail import send_mail
-
-from django.conf import settings
 
 from .models import ProjectInquiry
 from .serializers import ProjectInquirySerializer
 
+# ✅ SENDGRID FUNCTION
+from jeblioweb_backend.utils.email import send_email
 
+import threading
+
+
+# ======================
+# CREATE PROJECT INQUIRY
+# ======================
 class ProjectInquiryCreateView(APIView):
 
     def post(self, request):
@@ -17,56 +22,86 @@ class ProjectInquiryCreateView(APIView):
         if serializer.is_valid():
             inquiry = serializer.save()
 
-            # 📩 1. EMAIL TO ADMIN
-            send_mail(
-                subject=f"New Project Inquiry - {inquiry.name}",
-                message=f"""
-New Project Inquiry Received:
+            # ======================
+            # 📩 EMAIL TO ADMIN
+            # ======================
+            def send_admin_email():
+                try:
+                    message = f"""
+                    <h3>New Project Inquiry</h3>
 
-Name: {inquiry.name}
-Email: {inquiry.email}
-Phone: {inquiry.phone}
-Company: {inquiry.company}
+                    <p><b>Name:</b> {inquiry.name}</p>
+                    <p><b>Email:</b> {inquiry.email}</p>
+                    <p><b>Phone:</b> {inquiry.phone}</p>
+                    <p><b>Company:</b> {inquiry.company}</p>
 
-Service: {inquiry.service_type}
-Budget: {inquiry.project_budget}
-Timeline: {inquiry.urgency}
+                    <hr>
 
-Message:
-{inquiry.message}
-""",
-                from_email=settings.EMAIL_HOST_USER,  # ✅ company email
-                recipient_list=[settings.EMAIL_HOST_USER],
-            )
+                    <p><b>Service:</b> {inquiry.service_type}</p>
+                    <p><b>Budget:</b> {inquiry.project_budget}</p>
+                    <p><b>Timeline:</b> {inquiry.urgency}</p>
 
-            # 📩 2. AUTO-REPLY TO USER
-            send_mail(
-                subject="Thank you for contacting Jeblio Corporation 🚀",
-                message=f"""
-Dear {inquiry.name},
+                    <hr>
 
-Thank you for reaching out to Jeblio Corporation!
+                    <p><b>Message:</b><br>{inquiry.message}</p>
+                    """
 
-We have received your project inquiry and our team will review it shortly.
+                    send_email(
+                        to_email="jeblioinfo@gmail.com",
+                        subject=f"New Project Inquiry - {inquiry.name}",
+                        message=message
+                    )
 
-📌 Our team will contact you within 24 hours.
+                except Exception as e:
+                    print("Admin email error:", e)
 
-Here’s a quick summary of your request:
----------------------------------------
-Service: {inquiry.service_type}
-Budget: {inquiry.project_budget}
-Timeline: {inquiry.urgency}
+            # ======================
+            # 📩 AUTO REPLY TO USER
+            # ======================
+            def send_user_email():
+                try:
+                    message = f"""
+                    <h2>Thank You for Contacting Jeblio 🚀</h2>
 
-We’re excited to work with you! 🚀
+                    <p>Dear <b>{inquiry.name}</b>,</p>
 
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[inquiry.email],  # ✅ send to user
-            )
+                    <p>We have received your project inquiry successfully.</p>
+
+                    <p>Our team will review your requirements and contact you within <b>24 hours</b>.</p>
+
+                    <hr>
+
+                    <h4>Your Request Summary:</h4>
+                    <ul>
+                        <li><b>Service:</b> {inquiry.service_type}</li>
+                        <li><b>Budget:</b> {inquiry.project_budget}</li>
+                        <li><b>Timeline:</b> {inquiry.urgency}</li>
+                    </ul>
+
+                    <br>
+
+                    <p>We’re excited to work with you! 🚀</p>
+
+                    <p>
+                    Best Regards,<br>
+                    <b>Jeblio Corporation Pvt Ltd</b><br>
+                    📧 jeblioinfo@gmail.com<br>
+                    📞 +91 9952877911
+                    </p>
+                    """
+
+                    send_email(
+                        to_email=inquiry.email,
+                        subject="Thank you for contacting Jeblio Corporation 🚀",
+                        message=message
+                    )
+
+                except Exception as e:
+                    print("User email error:", e)
+
+            # ✅ RUN ASYNC
+            threading.Thread(target=send_admin_email).start()
+            threading.Thread(target=send_user_email).start()
 
             return Response(
                 {"message": "Submitted successfully"},
@@ -74,16 +109,11 @@ Jeblio Corporation Pvt Ltd
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.mail import send_mail
-from django.conf import settings
-
-from .models import ProjectInquiry
 
 
+# ======================
+# UPDATE STATUS
+# ======================
 class UpdateProjectStatusView(APIView):
 
     def post(self, request, pk):
@@ -100,67 +130,78 @@ class UpdateProjectStatusView(APIView):
         inquiry.status = new_status
         inquiry.save()
 
-        # 📧 SEND EMAIL BASED ON STATUS
-        if new_status == 'contacted':
-            send_mail(
-                subject="📞 We’ve Reviewed Your Project – Jeblio",
-                message=f"""
-Dear {inquiry.name},
+        # ======================
+        # 📧 SEND STATUS EMAIL
+        # ======================
+        def send_status_email():
+            try:
+                if new_status == 'contacted':
+                    message = f"""
+                    <h2>📞 We’ve Reviewed Your Project</h2>
 
-Thank you for reaching out to Jeblio Corporation.
+                    <p>Dear <b>{inquiry.name}</b>,</p>
 
-✅ Our team has reviewed your project requirements.
-📞 We will contact you shortly to discuss further details.
+                    <p>Our team has reviewed your project requirements.</p>
 
-We’re excited to work with you!
+                    <p>📞 We will contact you shortly to discuss further details.</p>
 
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[inquiry.email],
-                fail_silently=False,
-            )
+                    <br>
 
-        elif new_status == 'closed':
-            send_mail(
-                subject="Project Inquiry Closed – Jeblio",
-                message=f"""
-Dear {inquiry.name},
+                    <p>We’re excited to work with you!</p>
 
-Thank you for contacting Jeblio Corporation.
+                    <p>
+                    Best Regards,<br>
+                    Jeblio Corporation Pvt Ltd
+                    </p>
+                    """
 
-Your inquiry has been marked as closed.
+                    subject = "📞 We’ve Reviewed Your Project – Jeblio"
 
-If you have any new requirements in the future, feel free to reach out again.
+                else:
+                    message = f"""
+                    <h2>Project Inquiry Closed</h2>
 
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[inquiry.email],
-                fail_silently=False,
-            )
+                    <p>Dear <b>{inquiry.name}</b>,</p>
 
-        return Response({"message": "Status updated successfully"}, status=status.HTTP_200_OK)
-    
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+                    <p>Your inquiry has been marked as closed.</p>
 
-from .models import ProjectInquiry
-from .serializers import ProjectInquirySerializer
+                    <p>If you have new requirements in the future, feel free to contact us again.</p>
+
+                    <br>
+
+                    <p>
+                    Best Regards,<br>
+                    Jeblio Corporation Pvt Ltd
+                    </p>
+                    """
+
+                    subject = "Project Inquiry Closed – Jeblio"
+
+                send_email(
+                    to_email=inquiry.email,
+                    subject=subject,
+                    message=message
+                )
+
+            except Exception as e:
+                print("Status email error:", e)
+
+        # ✅ ASYNC
+        threading.Thread(target=send_status_email).start()
+
+        return Response(
+            {"message": "Status updated successfully"},
+            status=status.HTTP_200_OK
+        )
 
 
+# ======================
+# LIST INQUIRIES
+# ======================
 class ProjectInquiryListView(APIView):
 
     def get(self, request):
 
-        # 🔍 Optional filter: ?status=pending / contacted / closed
         status_filter = request.GET.get('status')
 
         if status_filter:

@@ -1,15 +1,20 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 
 from .models import InternshipApplication
 from .serializers import InternshipApplicationSerializer
 
+# ✅ IMPORT SENDGRID FUNCTION
+from jeblioweb_backend.utils.email import send_email
 
-from django.core.mail import send_mail
-from django.conf import settings
+import threading
 
-# ✅ CREATE APPLICATION
+
+# ======================
+# CREATE APPLICATION
+# ======================
 class InternshipApplicationView(APIView):
 
     def post(self, request):
@@ -18,59 +23,69 @@ class InternshipApplicationView(APIView):
         if serializer.is_valid():
             application = serializer.save()
 
-            # 📩 1. EMAIL TO COMPANY (ADMIN)
-            send_mail(
-                subject=f"New Internship Application - {application.full_name}",
-                message=f"""
-New Internship Application Received
+            # ======================
+            # 📩 EMAIL TO ADMIN
+            # ======================
+            def send_admin_email():
+                try:
+                    message = f"""
+                    <h3>New Internship Application</h3>
+                    <p><b>Name:</b> {application.full_name}</p>
+                    <p><b>Email:</b> {application.email}</p>
+                    <p><b>Phone:</b> {application.phone}</p>
+                    <p><b>Internship:</b> {application.internship_type}</p>
+                    """
 
--------------------------------------
+                    send_email(
+                        to_email="jeblioinfo@gmail.com",
+                        subject=f"New Internship Application - {application.full_name}",
+                        message=message
+                    )
+                except Exception as e:
+                    print("Admin email error:", e)
 
-👤 Name: {application.full_name}
-📧 Email: {application.email}
-📱 Phone: {application.phone}
+            # ======================
+            # 📩 AUTO REPLY TO USER
+            # ======================
+            def send_user_email():
+                try:
+                    message = f"""
+                    <h2>Application Received 🚀</h2>
 
-🎯 Internship: {application.internship_type}
+                    <p>Dear <b>{application.full_name}</b>,</p>
 
--------------------------------------
+                    <p>Thank you for applying to <b>Jeblio Corporation</b>.</p>
 
-Please review the application in the admin panel.
+                    <p>Your application for <b>{application.internship_type}</b> has been received successfully.</p>
 
-- Jeblio System
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[settings.EMAIL_HOST_USER],
-                fail_silently=False,
-            )
+                    <hr>
 
-            # 📩 2. AUTO-REPLY TO USER
-            send_mail(
-                subject="Application Received – Jeblio Corporation 🚀",
-                message=f"""
-Dear {application.full_name},
+                    <h4>What happens next?</h4>
+                    <ul>
+                        <li>Our team will review your application</li>
+                        <li>Shortlisted candidates will be contacted</li>
+                        <li>Process usually takes 24–48 hours</li>
+                    </ul>
 
-Thank you for applying to Jeblio Corporation!
+                    <br>
 
-We have successfully received your application for the 
-"{application.internship_type}" internship.
+                    <p>Best Regards,<br>
+                    <b>Jeblio Corporation Pvt Ltd</b><br>
+                    📧 jeblioinfo@gmail.com<br>
+                    📞 +91 9952877911</p>
+                    """
 
-📌 What happens next?
--------------------------------------
-• Our team will review your application
-• Shortlisted candidates will be contacted
-• Process usually takes 24–48 hours
+                    send_email(
+                        to_email=application.email,
+                        subject="Application Received – Jeblio Corporation 🚀",
+                        message=message
+                    )
+                except Exception as e:
+                    print("User email error:", e)
 
-We appreciate your interest in joining us and wish you the best!
-
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[application.email],
-                fail_silently=False,
-            )
+            # ✅ RUN EMAILS IN BACKGROUND
+            threading.Thread(target=send_admin_email).start()
+            threading.Thread(target=send_user_email).start()
 
             return Response(
                 {"message": "Application submitted successfully"},
@@ -78,16 +93,11 @@ Jeblio Corporation Pvt Ltd
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.mail import send_mail
-
-from .models import InternshipApplication
 
 
-# ✅ UPDATE STATUS (APPROVE / REJECT)
+# ======================
+# UPDATE STATUS
+# ======================
 class UpdateApplicationStatusView(APIView):
 
     def post(self, request, pk):
@@ -101,100 +111,83 @@ class UpdateApplicationStatusView(APIView):
         if new_status not in ['approved', 'rejected']:
             return Response({"error": "Invalid status"}, status=400)
 
-        # Update status
         application.status = new_status
         application.save()
 
-        # 📩 EMAIL BASED ON STATUS
-        if new_status == 'approved':
-            send_mail(
-                subject="🎉 Congratulations! You're Selected – Jeblio",
-                message=f"""
-Dear {application.full_name},
+        # ======================
+        # EMAIL BASED ON STATUS
+        # ======================
+        def send_status_email():
+            try:
+                if new_status == 'approved':
+                    message = f"""
+                    <h2>🎉 Congratulations!</h2>
 
-Congratulations! 🎉
+                    <p>Dear <b>{application.full_name}</b>,</p>
 
-We are pleased to inform you that you have been selected for the 
-"{application.internship_type}" internship at Jeblio Corporation.
+                    <p>You have been selected for the <b>{application.internship_type}</b> internship at Jeblio.</p>
 
-📌 Next Steps:
--------------------------------------
-• Our team will contact you shortly
-• You will receive onboarding details
-• Prepare to begin your internship journey 🚀
+                    <hr>
 
-We are excited to have you onboard!
+                    <h4>Next Steps:</h4>
+                    <ul>
+                        <li>Our team will contact you shortly</li>
+                        <li>You will receive onboarding details</li>
+                        <li>Get ready to start 🚀</li>
+                    </ul>
 
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[application.email],
-                fail_silently=False,
-            )
+                    <br>
 
-        elif new_status == 'rejected':
-            send_mail(
-                subject="Application Update – Jeblio Corporation",
-                message=f"""
-Dear {application.full_name},
+                    <p><b>Welcome aboard!</b></p>
 
-Thank you for your interest in the 
-"{application.internship_type}" internship at Jeblio Corporation.
+                    <p>Jeblio Corporation Pvt Ltd</p>
+                    """
 
-After careful consideration, we regret to inform you that you have not been selected at this time.
+                    subject = "🎉 You're Selected – Jeblio"
 
-📌 Note:
--------------------------------------
-We encourage you to apply again in the future as new opportunities arise.
+                else:
+                    message = f"""
+                    <h2>Application Update</h2>
 
-We truly appreciate your time and effort.
+                    <p>Dear <b>{application.full_name}</b>,</p>
 
-Best Regards,  
-Jeblio Corporation Pvt Ltd  
-📧 jeblioinfo@gmail.com  
-📞 +91 9952877911
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[application.email],
-                fail_silently=False,
-            )
+                    <p>Thank you for applying for the <b>{application.internship_type}</b> internship.</p>
+
+                    <p>We regret to inform you that you were not selected this time.</p>
+
+                    <hr>
+
+                    <p>We encourage you to apply again in the future.</p>
+
+                    <br>
+
+                    <p>Best Regards,<br>
+                    Jeblio Corporation Pvt Ltd</p>
+                    """
+
+                    subject = "Application Update – Jeblio"
+
+                send_email(
+                    to_email=application.email,
+                    subject=subject,
+                    message=message
+                )
+
+            except Exception as e:
+                print("Status email error:", e)
+
+        # ✅ RUN IN BACKGROUND
+        threading.Thread(target=send_status_email).start()
 
         return Response(
             {"message": "Status updated successfully"},
             status=status.HTTP_200_OK
-        )    
-from rest_framework.generics import ListAPIView
-from .serializers import InternshipApplicationSerializer
+        )
 
 
-from rest_framework.generics import ListAPIView
-from rest_framework.response import Response
-from .models import InternshipApplication
-from .serializers import InternshipApplicationSerializer
-
+# ======================
+# LIST APPLICATIONS
+# ======================
 class InternshipApplicationListView(ListAPIView):
     queryset = InternshipApplication.objects.all().order_by('-created_at')
     serializer_class = InternshipApplicationSerializer
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-
-        response = Response(serializer.data)
-
-        # ✅ FORCE CORS HEADERS
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Headers"] = "*"
-        response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-
-        return response
-
-    def options(self, request, *args, **kwargs):
-        response = Response()
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Headers"] = "*"
-        response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        return response
