@@ -93,3 +93,41 @@ class CertificateVerifyView(APIView):
                 "status": "invalid",
                 "message": "Certificate not found"
             }, status=status.HTTP_404_NOT_FOUND)
+        
+from rest_framework.generics import ListAPIView
+from .models import Certificate
+from .serializers import CertificateSerializer
+
+class CertificateListView(ListAPIView):
+    queryset = Certificate.objects.all().order_by('-created_at')
+    serializer_class = CertificateSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Certificate
+
+class DeleteCertificateView(APIView):
+
+    def delete(self, request, cert_id):
+        try:
+            certificate = Certificate.objects.get(cert_id=cert_id)
+            certificate.delete()
+
+            return Response({
+                "message": "Certificate deleted successfully"
+            }, status=status.HTTP_200_OK)
+
+        except Certificate.DoesNotExist:
+            return Response({
+                "error": "Certificate not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+class DeleteAllCertificatesView(APIView):
+
+    def delete(self, request):
+        count, _ = Certificate.objects.all().delete()
+
+        return Response({
+            "message": f"{count} certificates deleted successfully"
+        }, status=status.HTTP_200_OK)

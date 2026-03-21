@@ -269,6 +269,41 @@ def get_application_count(request):
         "count": int(total)
     })
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.utils import timezone
+from rest_framework import status
+from .models import ApplicationCounter
+
+
+@api_view(['POST'])
+def reset_application_count(request):
+    try:
+        counter = ApplicationCounter.objects.get(id=1)
+
+        # ✅ Reset start time to now
+        counter.start_time = timezone.now()
+
+        # ✅ Optional: reset base count (you can customize)
+        counter.base_count = 100
+
+        # ✅ Optional: reset increments (if needed)
+        # counter.increments = []
+
+        counter.save()
+
+        return Response({
+            "message": "Application counter reset successfully",
+            "new_start_time": counter.start_time,
+            "base_count": counter.base_count
+        }, status=status.HTTP_200_OK)
+
+    except ApplicationCounter.DoesNotExist:
+        return Response({
+            "error": "ApplicationCounter not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    
 from django.http import JsonResponse
 
 def download_syllabus(request, domain):

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (InternshipApplicationView, UpdateApplicationStatusView, InternshipApplicationListView,
-                    DeleteApplicationView, get_application_count, download_syllabus)
+                    DeleteApplicationView, get_application_count, download_syllabus,reset_application_count)
 
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path('delete/<int:pk>/', DeleteApplicationView.as_view()),
     path('application-count/', get_application_count),
     path('download-syllabus/<str:domain>/', download_syllabus),
+    path('reset-count/', reset_application_count, name='reset-application-count'),
 ]
