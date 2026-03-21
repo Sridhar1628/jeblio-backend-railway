@@ -303,7 +303,7 @@ def reset_application_count(request):
             "error": "ApplicationCounter not found"
         }, status=status.HTTP_404_NOT_FOUND)
     
-    
+
 from django.http import JsonResponse
 
 def download_syllabus(request, domain):
@@ -325,5 +325,5 @@ def download_syllabus(request, domain):
         return JsonResponse({"error": "Invalid domain"}, status=404)
 
     return JsonResponse({
-        "download_url": file_url
+        "download_url": file_url + "?fl_attachment=true"
     })
