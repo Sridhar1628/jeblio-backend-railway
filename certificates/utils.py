@@ -17,7 +17,7 @@ from jeblioweb_backend.utils.email import send_email
 # ======================
 BASE_DIR = settings.BASE_DIR
 
-TEMPLATE = os.path.join(BASE_DIR, "media", "template", "certificate_template.jpg")
+TEMPLATE = os.path.join(BASE_DIR, "media", "template", "certificate_template.png")
 OUTPUT = os.path.join(BASE_DIR, "media", "output", "certificates")
 QR_FOLDER = os.path.join(BASE_DIR, "media", "qr_codes")
 
