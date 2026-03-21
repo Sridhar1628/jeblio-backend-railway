@@ -269,50 +269,26 @@ def get_application_count(request):
         "count": int(total)
     })
 
-from django.http import FileResponse, Http404
-from django.conf import settings
-import os
-
+from django.http import JsonResponse
 
 def download_syllabus(request, domain):
-    # ===== FILE MAP =====
     file_map = {
-        "web-development": "web_dev.pdf",
-        "mobile-development": "mobile_dev.pdf",
-        "data-science": "data_science.pdf",
-        "digital-marketing": "digital_marketing.pdf",
-        "ui-ux": "uiux.pdf",
-        "business-development": "business.pdf",
-        "cloud-computing": "cloud.pdf",
-        "ai-machine-learning": "ai_ml.pdf",
-        "cyber-security": "cyber_security.pdf",
+        "web-development": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095649/web_dev_syllabus_styki6.pdf",
+        "mobile-development": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095647/mobile_app_syllabus_hj5axh.pdf",
+        "data-science": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095647/data_science_syllabus_ntvvx5.pdf",
+        "digital-marketing": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095647/digital_marketing_syllabus_cnbrfn.pdf",
+        "ui-ux": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095648/uiux_design_syllabus_xsgebf.pdf",
+        "business-development": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095646/business_development_syllabus_slvhmc.pdf",
+        "cloud-computing": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095646/cloud_computing_syllabus_xskpvq.pdf",
+        "ai-machine-learning": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095646/ai_ml_syllabus_kmlpcp.pdf",
+        "cyber-security": "https://res.cloudinary.com/dbc5qc0or/image/upload/v1774095646/cyber_security_syllabus_yu0tg0.pdf",
     }
 
-    # ===== GET FILE NAME =====
-    filename = file_map.get(domain)
+    file_url = file_map.get(domain)
 
-    if not filename:
-        raise Http404("Invalid domain")
+    if not file_url:
+        return JsonResponse({"error": "Invalid domain"}, status=404)
 
-    # ===== BUILD FILE PATH =====
-    file_path = os.path.join(settings.MEDIA_ROOT, "syllabus", filename)
-
-    # ===== DEBUG (REMOVE LATER) =====
-    print("Requested Domain:", domain)
-    print("Resolved Filename:", filename)
-    print("MEDIA_ROOT:", settings.MEDIA_ROOT)
-    print("Final File Path:", file_path)
-    print("File Exists:", os.path.exists(file_path))
-
-    # ===== CHECK FILE EXISTS =====
-    if not os.path.exists(file_path):
-        raise Http404(f"File not found: {filename}")
-
-    # ===== RETURN FILE RESPONSE =====
-    try:
-        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
-    except Exception as e:
-        print("ERROR:", str(e))
-        raise Http404("Error while opening file")
+    return JsonResponse({
+        "download_url": file_url
+    })
