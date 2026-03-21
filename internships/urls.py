@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (InternshipApplicationView, UpdateApplicationStatusView, InternshipApplicationListView,
-                    DeleteApplicationView, get_application_count)
+                    DeleteApplicationView, get_application_count, download_syllabus)
 
 
 urlpatterns = [
@@ -9,4 +9,5 @@ urlpatterns = [
     path('all/', InternshipApplicationListView.as_view()),
     path('delete/<int:pk>/', DeleteApplicationView.as_view()),
     path('application-count/', get_application_count),
+    path('download-syllabus/<str:domain>/', download_syllabus),
 ]

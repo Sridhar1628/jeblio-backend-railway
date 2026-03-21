@@ -268,3 +268,32 @@ def get_application_count(request):
     return Response({
         "count": int(total)
     })
+
+from django.http import FileResponse, Http404
+import os
+from django.conf import settings
+
+def download_syllabus(request, domain):
+    file_map = {
+        "web-development": "web_dev.pdf",
+        "mobile-development": "mobile_dev.pdf",
+        "data-science": "data_science.pdf",
+        "digital-marketing": "digital_marketing.pdf",
+        "ui-ux": "uiux.pdf",
+        "business-development": "business.pdf",
+        "cloud-computing": "cloud.pdf",
+        "ai-machine-learning": "ai_ml.pdf",
+        "cyber-security": "cyber_security.pdf",
+    }
+
+    filename = file_map.get(domain)
+
+    if not filename:
+        raise Http404("Invalid domain")
+
+    file_path = os.path.join(settings.MEDIA_ROOT, "syllabus", filename)
+
+    if not os.path.exists(file_path):
+        raise Http404("File not found")
+
+    return FileResponse(open(file_path, 'rb'), as_attachment=True)
