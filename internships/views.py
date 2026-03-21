@@ -270,10 +270,12 @@ def get_application_count(request):
     })
 
 from django.http import FileResponse, Http404
-import os
 from django.conf import settings
+import os
+
 
 def download_syllabus(request, domain):
+    # ===== FILE MAP =====
     file_map = {
         "web-development": "web_dev.pdf",
         "mobile-development": "mobile_dev.pdf",
@@ -286,14 +288,31 @@ def download_syllabus(request, domain):
         "cyber-security": "cyber_security.pdf",
     }
 
+    # ===== GET FILE NAME =====
     filename = file_map.get(domain)
 
     if not filename:
         raise Http404("Invalid domain")
 
+    # ===== BUILD FILE PATH =====
     file_path = os.path.join(settings.MEDIA_ROOT, "syllabus", filename)
 
-    if not os.path.exists(file_path):
-        raise Http404("File not found")
+    # ===== DEBUG (REMOVE LATER) =====
+    print("Requested Domain:", domain)
+    print("Resolved Filename:", filename)
+    print("MEDIA_ROOT:", settings.MEDIA_ROOT)
+    print("Final File Path:", file_path)
+    print("File Exists:", os.path.exists(file_path))
 
-    return FileResponse(open(file_path, 'rb'), as_attachment=True)
+    # ===== CHECK FILE EXISTS =====
+    if not os.path.exists(file_path):
+        raise Http404(f"File not found: {filename}")
+
+    # ===== RETURN FILE RESPONSE =====
+    try:
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        print("ERROR:", str(e))
+        raise Http404("Error while opening file")
