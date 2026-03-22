@@ -37,7 +37,7 @@ class InternshipApplicationView(APIView):
                     """
 
                     send_email(
-                        to_email="jeblioinfo@gmail.com",
+                        to_email="no-reply@jeblio.com",
                         subject=f"New Internship Application - {application.full_name}",
                         message=message
                     )
@@ -71,7 +71,7 @@ class InternshipApplicationView(APIView):
 
                     <p>Best Regards,<br>
                     <b>Jeblio Corporation Pvt Ltd</b><br>
-                    📧 jeblioinfo@gmail.com<br>
+                    📧 no-reply@jeblio.com<br>
                     📞 +91 9952877911</p>
                     """
 

@@ -15,7 +15,7 @@ def send_email(to_email, subject, message, attachment=None):
         sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
 
         email = Mail(
-            from_email='jeblioinfo@gmail.com',  # must be verified in SendGrid
+            from_email='no-reply@jeblio.com',  # must be verified in SendGrid
             to_emails=to_email,
             subject=subject,
             html_content=message

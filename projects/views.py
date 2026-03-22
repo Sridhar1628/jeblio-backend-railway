@@ -47,7 +47,7 @@ class ProjectInquiryCreateView(APIView):
                     """
 
                     send_email(
-                        to_email="jeblioinfo@gmail.com",
+                        to_email="no-reply@jeblio.com",
                         subject=f"New Project Inquiry - {inquiry.name}",
                         message=message
                     )
@@ -85,7 +85,7 @@ class ProjectInquiryCreateView(APIView):
                     <p>
                     Best Regards,<br>
                     <b>Jeblio Corporation Pvt Ltd</b><br>
-                    📧 jeblioinfo@gmail.com<br>
+                    📧 no-reply@jeblio.com<br>
                     📞 +91 9952877911
                     </p>
                     """
