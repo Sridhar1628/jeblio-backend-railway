@@ -146,12 +146,14 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 # ======================
 CORS_ALLOWED_ORIGINS = [
     "https://jeblio-website.onrender.com",
+    "https://jeblio.com/"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "content-type",
+    "authorization"
 ]
 
 CORS_ALLOW_METHODS = [
