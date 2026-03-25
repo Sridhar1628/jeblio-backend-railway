@@ -164,7 +164,7 @@ def process_certificates(excel_file_path):
             issue_date = end_date + timedelta(days=2)
             issue_date_text = issue_date.strftime("%d %B %Y")
 
-            verify_url = f"https://www.jeblio.com/verify/{cert_id}"
+            verify_url = f"https://jeblio.com/verify/{cert_id}"
 
             # QR
             qr_path = os.path.join(QR_FOLDER, f"{cert_id}.png")
