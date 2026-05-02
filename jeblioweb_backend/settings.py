@@ -2,6 +2,11 @@ from pathlib import Path
 import os
 import dj_database_url
 from corsheaders.defaults import default_headers
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
 # ======================
 # BASE
@@ -34,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 
     'corsheaders',
 
@@ -42,6 +48,8 @@ INSTALLED_APPS = [
     'internships.apps.InternshipsConfig',
     'services',
     'projects',
+    'chatbot',
+    'webinar',
 ]
 
 # ======================
@@ -146,7 +154,8 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 # ======================
 CORS_ALLOWED_ORIGINS = [
     "https://jeblio-website.onrender.com",
-    "https://jeblio.com"
+    "https://jeblio.com",
+    "http://localhost:3000"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -183,3 +192,6 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ]
 }
+DEBUG =True
+RAZORPAY_KEY_ID = "rzp_test_xxxxx"
+RAZORPAY_KEY_SECRET = "xxxxxxxx"

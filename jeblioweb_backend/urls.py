@@ -8,6 +8,9 @@ urlpatterns = [
     path('api/certificates/', include('certificates.urls')),
     path('api/internships/', include('internships.urls')),
     path('api/projects/', include('projects.urls')),
+    path('api/', include('chatbot.urls')),
+    path('api/webinar/', include('webinar.urls')),
+
 
 ]
 if settings.DEBUG:
