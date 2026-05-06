@@ -1,7 +1,23 @@
-.env
-venv/
+# Python
 __pycache__/
 *.pyc
+
+# Virtual Environment
+venv/
+
+# Environment Variables
+.env
+
+# Database
 db.sqlite3
+
+# Static & Media
 media/
 staticfiles/
+
+# Node
+node_modules/
+
+# OS Files
+.DS_Store
+Thumbs.db
