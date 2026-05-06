@@ -94,22 +94,26 @@ TEMPLATES = [
 # ======================
 # DATABASE
 # ======================
-import dj_database_url
-import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-    )
-}
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-DATABASES['default']['OPTIONS'] = {
-    'sslmode': 'require'
-}
-
+    
 # ======================
 # PASSWORD VALIDATION
 # ======================
@@ -197,3 +201,14 @@ REST_FRAMEWORK = {
 DEBUG =True
 RAZORPAY_KEY_ID = "rzp_test_xxxxx"
 RAZORPAY_KEY_SECRET = "xxxxxxxx"
+
+# ======================
+# CASHFREE
+# ======================
+
+CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID")
+CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY")
+
+CASHFREE_ENVIRONMENT = "SANDBOX"
+
+print("Cashfree App ID:", CASHFREE_APP_ID)

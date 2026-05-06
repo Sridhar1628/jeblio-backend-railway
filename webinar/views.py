@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+import threading
 from .models import TermsAndConditions
 
 @api_view(['GET'])
@@ -14,73 +15,137 @@ def get_terms(request):
 
     return Response({"message": "No terms found"})
 
-import razorpay
-from django.conf import settings
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
+from cashfree_pg.api_client import Cashfree
+from cashfree_pg.models.create_order_request import CreateOrderRequest
+from cashfree_pg.models.customer_details import CustomerDetails
+from cashfree_pg.models.order_meta import OrderMeta
 
-client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+import uuid
+from django.conf import settings
+
 
 @api_view(['POST'])
 def create_order(request):
-    amount = 4900  # ₹49 in paise
 
-    order = client.order.create({
-        "amount": amount,
-        "currency": "INR",
-        "payment_capture": 1
-    })
+    data = request.data
 
-    return Response(order)
+    order_id = str(uuid.uuid4())
 
+    customer_details = CustomerDetails(
+        customer_id=order_id,
+        customer_name=data.get("name"),
+        customer_email=data.get("email"),
+        customer_phone=data.get("phone"),
+    )
+
+    order_meta = OrderMeta(
+        return_url=f"http://localhost:3000/success?order_id={order_id}&name={data.get('name')}&email={data.get('email')}&phone={data.get('phone')}"
+    )
+
+    create_order_request = CreateOrderRequest(
+        order_amount=49.0,
+        order_currency="INR",
+        customer_details=customer_details,
+        order_id=order_id,
+        order_meta=order_meta
+    )
+
+    try:
+
+        cashfree = Cashfree(
+            XClientId=settings.CASHFREE_APP_ID,
+            XClientSecret=settings.CASHFREE_SECRET_KEY,
+            XEnvironment=Cashfree.SANDBOX
+        )
+
+        response = cashfree.PGCreateOrder(
+            "2023-08-01",
+            create_order_request
+        )
+
+        return Response({
+            "payment_session_id": response.data.payment_session_id,
+            "order_id": order_id
+        })
+
+    except Exception as e:
+
+        print("CASHFREE ERROR:", str(e))
+
+        return Response({
+            "error": str(e)
+        }, status=400)
+    
 
 from .models import WebinarRegistration
 from jeblioweb_backend.utils.email import send_email
-import threading
+
 
 @api_view(['POST'])
 def verify_payment(request):
-    data = request.data
+
+    order_id = request.data.get("order_id")
 
     try:
-        client.utility.verify_payment_signature({
-            'razorpay_order_id': data['razorpay_order_id'],
-            'razorpay_payment_id': data['razorpay_payment_id'],
-            'razorpay_signature': data['razorpay_signature']
-        })
 
-        # ✅ SAVE DATA
-        registration = WebinarRegistration.objects.create(
-            name=data.get("name"),
-            email=data.get("email"),
-            phone=data.get("phone"),
-            payment_id=data.get("razorpay_payment_id"),
-            order_id=data.get("razorpay_order_id"),
+        cashfree = Cashfree(
+            XClientId=settings.CASHFREE_APP_ID,
+            XClientSecret=settings.CASHFREE_SECRET_KEY,
+            XEnvironment=Cashfree.SANDBOX
         )
 
-        # ======================
-        # 📩 EMAIL TO USER
-        # ======================
-        def send_user_email():
-            try:
+        response = cashfree.PGFetchOrder(
+            "2023-08-01",
+            order_id
+        )
+
+        order_data = response.data
+
+        # ✅ CHECK PAYMENT STATUS
+        if order_data.order_status == "PAID":
+
+            # Prevent duplicate save
+            existing = WebinarRegistration.objects.filter(
+                order_id=order_id
+            ).first()
+
+            if existing:
+                return Response({
+                    "status": "already_saved"
+                })
+
+            registration = WebinarRegistration.objects.create(
+                name=request.data.get("name"),
+                email=request.data.get("email"),
+                phone=request.data.get("phone"),
+                payment_id=order_data.cf_order_id,
+                order_id=order_id,
+                payment_status=order_data.order_status,
+                payment_method="cashfree"
+            )
+
+            # ======================
+            # USER EMAIL
+            # ======================
+
+            def send_user_email():
+
                 message = f"""
                 <h2>🎉 Registration Successful!</h2>
 
                 <p>Hi <b>{registration.name}</b>,</p>
 
-                <p>You have successfully registered for the <b>Jeblio Webinar</b>.</p>
+                <p>Your webinar registration is confirmed.</p>
 
                 <p>📅 April 26 | ⏰ 6 PM IST</p>
 
-                <hr>
+                <br>
 
-                <p><b>👉 Join WhatsApp Group:</b></p>
-                <a href="YOUR_WHATSAPP_LINK">Click Here to Join</a>
+                <a href="YOUR_WHATSAPP_LINK">
+                    Join WhatsApp Group
+                </a>
 
                 <br><br>
-
-                <p>See you in the session 🚀</p>
 
                 <p>— Jeblio Team</p>
                 """
@@ -90,37 +155,21 @@ def verify_payment(request):
                     subject="Webinar Registration Confirmed 🚀",
                     message=message
                 )
-            except Exception as e:
-                print("User email error:", e)
 
-        # ======================
-        # 📩 EMAIL TO ADMIN
-        # ======================
-        def send_admin_email():
-            try:
-                message = f"""
-                <h3>New Webinar Registration</h3>
+            threading.Thread(target=send_user_email).start()
 
-                <p><b>Name:</b> {registration.name}</p>
-                <p><b>Email:</b> {registration.email}</p>
-                <p><b>Phone:</b> {registration.phone}</p>
-                <p><b>Payment_id:</b> {registration.payment_id}</p>
-                <p><b>Order_id:</b> {registration.order_id}</p>
+            return Response({
+                "status": "success"
+            })
 
-                """
+        return Response({
+            "status": "failed"
+        }, status=400)
 
-                send_email(
-                    to_email="jeblioinfo@gmail.com",
-                    subject="New Webinar Registration",
-                    message=message
-                )
-            except Exception as e:
-                print("Admin email error:", e)
+    except Exception as e:
 
-        threading.Thread(target=send_user_email).start()
-        threading.Thread(target=send_admin_email).start()
+        print("VERIFY ERROR:", str(e))
 
-        return Response({"status": "success"})
-
-    except:
-        return Response({"status": "failed"}, status=400)
+        return Response({
+            "error": str(e)
+        }, status=400)
