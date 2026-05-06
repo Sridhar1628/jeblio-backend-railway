@@ -3,6 +3,7 @@ from rest_framework.response import Response
 import threading
 from .models import TermsAndConditions
 from django.conf import settings
+from urllib.parse import urlencode
 
 
 from cashfree_pg.api_client import Cashfree
@@ -28,14 +29,15 @@ def create_order(request):
         customer_phone=data.get("phone"),
     )
 
+    query_params = urlencode({
+        "order_id": order_id,
+        "name": data.get("name"),
+        "email": data.get("email"),
+        "phone": data.get("phone"),
+    })
+
     order_meta = OrderMeta(
-        return_url=(
-            f"{settings.FRONTEND_URL}/success"
-            f"?order_id={order_id}"
-            f"&name={data.get('name')}"
-            f"&email={data.get('email')}"
-            f"&phone={data.get('phone')}"
-        )
+        return_url=f"{settings.FRONTEND_URL}/success?{query_params}"
     )
 
     create_order_request = CreateOrderRequest(
