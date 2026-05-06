@@ -5,9 +5,12 @@ from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 import os
 
+
+
 load_dotenv()
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 # ======================
 # BASE
 # ======================
@@ -113,7 +116,7 @@ else:
         }
     }
 
-    
+
 # ======================
 # PASSWORD VALIDATION
 # ======================

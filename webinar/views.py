@@ -2,18 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import threading
 from .models import TermsAndConditions
+from django.conf import settings
 
-@api_view(['GET'])
-def get_terms(request):
-    terms = TermsAndConditions.objects.filter(is_active=True).last()
-
-    if terms:
-        return Response({
-            "title": terms.title,
-            "content": terms.content
-        })
-
-    return Response({"message": "No terms found"})
 
 from cashfree_pg.api_client import Cashfree
 from cashfree_pg.models.create_order_request import CreateOrderRequest
@@ -39,7 +29,13 @@ def create_order(request):
     )
 
     order_meta = OrderMeta(
-        return_url=f"http://localhost:3000/success?order_id={order_id}&name={data.get('name')}&email={data.get('email')}&phone={data.get('phone')}"
+        return_url=(
+            f"{settings.FRONTEND_URL}/success"
+            f"?order_id={order_id}"
+            f"&name={data.get('name')}"
+            f"&email={data.get('email')}"
+            f"&phone={data.get('phone')}"
+        )
     )
 
     create_order_request = CreateOrderRequest(
