@@ -171,3 +171,63 @@ def verify_payment(request):
         return Response({
             "error": str(e)
         }, status=400)
+    
+    # views.py
+
+import os
+
+from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+User = get_user_model()
+
+
+class CreateInitialSuperAdminView(APIView):
+
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+
+        # SECRET VALIDATION
+        secret = request.data.get("secret_key")
+
+        if secret != os.getenv("SUPER_ADMIN_SECRET"):
+            return Response(
+                {"error": "Invalid secret key"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # PREVENT MULTIPLE SUPER ADMINS
+        if User.objects.filter(is_superuser=True).exists():
+            return Response(
+                {"error": "Super admin already exists"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not username or not email or not password:
+            return Response(
+                {"error": "username, email, password required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # CREATE SUPERUSER
+        user = User.objects.create_superuser(
+            username=username,
+            email=email,
+            password=password
+        )
+
+        return Response(
+            {
+                "message": "Super admin created successfully",
+                "username": user.username,
+            },
+            status=status.HTTP_201_CREATED
+        )
