@@ -209,6 +209,8 @@ RAZORPAY_KEY_SECRET = "xxxxxxxx"
 # CASHFREE
 # ======================
 
+CASHFREE_ENV = os.environ.get("CASHFREE_ENV", "SANDBOX")
+
 CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID")
 CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY")
 
