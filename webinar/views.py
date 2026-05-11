@@ -151,7 +151,7 @@ def verify_payment(request):
 
                 <br>
 
-                <a href="YOUR_WHATSAPP_LINK">
+                <a href="https://chat.whatsapp.com/DuBbqW4KiBRJYARS64x57K">
                     Join WhatsApp Group
                 </a>
 

@@ -1,0 +1,499 @@
+Jeblio Exclusive Pass & Dynamic Reward Funnel Platform
+Production-Ready Development Summary & Execution Plan
+Project Vision
+
+We are building a premium QR-based student acquisition and course conversion platform for Jeblio
+.
+
+This is not just a QR generator or course website.
+
+The platform is designed to become a:
+
+student acquisition engine
+regional campus engagement platform
+consultation funnel
+reward psychology platform
+course conversion system
+
+combining:
+
+offline marketing
+QR engagement
+influencer campaigns
+treasure hunts
+dynamic rewards
+consultation-based sales
+premium Gen-Z experience
+
+The platform should feel:
+
+futuristic
+premium
+startup-grade
+psychologically engaging
+high-conversion focused
+
+Reference inspirations:
+
+CRED
+Apple
+modern gaming reward systems
+Core Business Flow
+Admin Creates Campaign
+        ↓
+Admin Generates QR Passes
+        ↓
+Students Scan QR
+        ↓
+Student Verification (OTP)
+        ↓
+Dynamic Reward Allocation
+        ↓
+Reward Reveal Experience
+        ↓
+Consultation / Course Purchase
+        ↓
+Lead Conversion Tracking
+Main Platform Modules
+1. Campaign Engine
+
+Admin can:
+
+create campaigns
+assign target audience
+assign reward pools
+define campaign type
+map regions/colleges
+activate/deactivate campaigns
+
+Examples:
+
+AI Career Access
+Placement Unlock Drive
+Treasure Hunt Campaign
+Internship Opportunity Campaign
+2. QR Pass Generation Engine
+
+The system generates:
+
+unique QR codes
+unique access codes
+dynamic pass images
+printable PNG exports
+printable PDF layouts
+
+Each pass contains:
+
+QR code
+access code
+campaign mapping
+expiry date
+reward mapping
+category mapping
+usage status
+
+QR format:
+
+https://domain.com/claim?code=XXXX
+3. Pass Distribution Tracking
+
+Track:
+
+who distributed passes
+distribution source
+region
+college
+influencer
+workshop campaign
+
+Purpose:
+
+marketing analytics
+conversion analysis
+influencer performance tracking
+4. Student Claim & Verification Engine
+
+When QR is scanned:
+
+landing page opens
+pass auto-fills
+student submits details
+OTP verification required
+
+Student form includes:
+
+name
+mobile number
+email
+college
+year
+department
+
+Security requirements:
+
+one claim per pass
+one claim per mobile number
+duplicate prevention
+anti-spam
+rate limiting
+5. Dynamic Reward Engine (Core System)
+
+This is the heart of the platform.
+
+System supports:
+
+multiple reward types
+quantity limits
+rarity system
+category-based rewards
+campaign-based rewards
+weighted random allocation
+
+Reward examples:
+
+workshops
+scholarship discounts
+internship preparation
+mentorship access
+premium consultation
+
+Reward flow:
+
+Validate Student
+        ↓
+Check Eligibility
+        ↓
+Filter Available Rewards
+        ↓
+Random Reward Allocation
+        ↓
+Decrease Reward Quantity
+        ↓
+Store Assignment
+
+Each student receives:
+
+only one reward
+Reward Rarity System
+
+Recommended structure:
+
+COMMON
+RARE
+EPIC
+LEGENDARY
+
+This creates:
+
+excitement
+curiosity
+gamification
+Gen-Z engagement
+6. Reward Reveal Experience
+
+After verification:
+
+suspense animation
+loading sequence
+progress effects
+premium reveal motion
+
+Then display:
+
+unlocked reward
+benefits
+internship opportunities
+mentorship details
+countdown timer
+limited seat information
+
+UI requirements:
+
+futuristic
+mobile-first
+glow effects
+smooth animations
+gaming-inspired reveal
+7. Consultation Funnel
+
+Main business conversion system.
+
+After reward reveal:
+
+Book Free Consultation
+OR
+Join Now
+
+Consultation flow includes:
+
+WhatsApp redirect
+callback request
+counselor assignment
+consultation notes
+
+Purpose:
+
+human conversion
+career counseling
+course sales conversion
+8. Course & Payment Engine
+
+Admin can:
+
+add courses
+define pricing
+define scholarship discounts
+
+Student can:
+
+join workshop
+purchase course
+claim scholarship pricing
+
+Payment integration:
+
+Cashfree
+
+Need:
+
+payment tracking
+success/failure pages
+enrollment confirmation
+admin notifications
+9. CRM / Lead Management
+
+Admin dashboard tracks:
+
+student details
+assigned rewards
+consultation status
+payment status
+conversion status
+
+Lead statuses:
+
+New Lead
+Contacted
+Interested
+Consultation Booked
+Payment Pending
+Converted
+Expired
+10. Analytics Engine
+
+Track:
+
+QR scans
+reward claims
+campaign performance
+top colleges
+top influencers
+consultation conversions
+payment conversions
+11. Automation Engine
+
+After claim:
+
+WhatsApp confirmations
+consultation reminders
+payment reminders
+follow-up automation
+
+Suggested timings:
+
+immediate
+after 6 hours
+after 24 hours
+12. Security & Fraud Prevention
+
+Need:
+
+OTP cooldown
+QR anti-reuse protection
+duplicate prevention
+rate limiting
+secure APIs
+one-time reward assignment
+Current Design Direction
+
+We already finalized:
+
+premium QR pass template
+futuristic black/gold theme
+QR placeholder
+access code placeholder
+expiry placeholder
+
+Design direction:
+
+premium event pass
+exclusive opportunity unlock
+NOT coaching advertisement
+Existing Infrastructure
+
+Current setup:
+
+Backend:
+
+Django + DRF
+already deployed on Render
+
+Frontend:
+
+Next.js
+
+Database:
+
+PostgreSQL
+
+Payments:
+
+Cashfree
+
+Domain:
+
+Jeblio
+Final Production Tech Stack
+Frontend
+Next.js 15
+Tailwind CSS
+Framer Motion
+ShadCN UI
+Backend
+Django
+Django REST Framework
+Database
+PostgreSQL
+Storage
+Cloudinary
+QR/Image Generation
+qrcode
+Pillow
+reportlab
+Authentication
+JWT Authentication
+OTP
+Firebase OTP or MSG91
+Payments
+Cashfree
+Backend Architecture Plan
+
+We will NOT create a separate backend project.
+
+Instead:
+
+create a new scalable module inside current backend
+
+Structure:
+
+apps/
+    unlock_engine/
+        campaigns/
+        passes/
+        rewards/
+        claims/
+        consultations/
+        analytics/
+        automation/
+Core Database Structure
+
+Main tables:
+
+Campaigns
+Rewards
+Passes
+PassDistributions
+Claims
+RewardAssignments
+Courses
+Payments
+Consultations
+AnalyticsEvents
+Frontend Routes
+
+Public pages:
+
+/unlock
+/claim/[code]
+/reward/[claimId]
+/checkout
+/payment-success
+
+Admin pages:
+
+/admin/unlock/campaigns
+/admin/unlock/rewards
+/admin/unlock/passes
+/admin/unlock/leads
+/admin/unlock/analytics
+Professional Development Stages
+STAGE 1 — FOUNDATION
+
+Build:
+
+architecture
+database schema
+app structure
+APIs
+admin foundation
+STAGE 2 — CORE EXPERIENCE
+
+Build:
+
+QR generation engine
+pass generation
+claim flow
+OTP verification
+reward engine
+reward reveal experience
+STAGE 3 — CONVERSION & SCALE
+
+Build:
+
+consultation flow
+payments
+CRM
+analytics
+automation
+deployment optimization
+Recommended Build Order
+Phase 1 — Foundation
+module setup
+database design
+API architecture
+admin auth
+Phase 2 — Campaign Engine
+campaigns
+rewards
+categories
+Phase 3 — Pass Generation Engine
+unique code generation
+QR generation
+dynamic pass image generation
+PNG/PDF export
+Phase 4 — Claim Engine
+landing page
+validations
+OTP verification
+anti-duplicate protection
+Phase 5 — Reward Engine
+rarity system
+weighted reward allocation
+quantity management
+Phase 6 — Reward Reveal Experience
+suspense animation
+premium reveal UI
+CTA flow
+Phase 7 — Conversion System
+WhatsApp consultation
+Cashfree integration
+enrollment flow
+Phase 8 — CRM & Analytics
+lead management
+campaign analytics
+automation
+Final Product Goal
+
+The final platform should become:
+
+A scalable student acquisition and conversion ecosystem for Jeblio that combines QR engagement, influencer campaigns, gamified rewards, consultation funnels, and course conversion into one premium startup-grade experience.
