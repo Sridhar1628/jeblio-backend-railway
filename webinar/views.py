@@ -263,8 +263,8 @@ def verify_payment(request):
                     <p>Your webinar registration is confirmed successfully.</p>
 
                     <p>
-                        📅 <b>April 26</b><br>
-                        ⏰ <b>6 PM IST</b>
+                        📅 <b>May 15</b><br>
+                        ⏰ <b>6 : 30 PM IST</b>
                     </p>
 
                     <br>
