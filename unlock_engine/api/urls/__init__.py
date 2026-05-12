@@ -20,4 +20,8 @@ urlpatterns = [
         'leads/',
         include('unlock_engine.api.urls.lead_urls')
     ),
+    path(
+        'otp/',
+        include('unlock_engine.api.urls.otp_urls')
+    ),
 ]

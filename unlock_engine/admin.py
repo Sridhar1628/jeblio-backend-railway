@@ -185,3 +185,99 @@ class LeadAdmin(admin.ModelAdmin):
     ]
 
     ordering = ['-created_at']
+
+from django.contrib import admin
+from unlock_engine.models.otp_models import OTPVerification
+
+
+@admin.register(OTPVerification)
+class OTPVerificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "lead",
+        "otp_code",
+        "is_verified",
+        "attempt_count",
+        "expires_at",
+        "verified_at",
+        "created_at",
+        "is_expired_status",
+    )
+
+    list_filter = (
+        "is_verified",
+        "created_at",
+        "expires_at",
+        "verified_at",
+    )
+
+    search_fields = (
+        "lead__full_name",
+        "lead__email",
+        "otp_code",
+    )
+
+    readonly_fields = (
+        "id",
+        "created_at",
+        "updated_at",
+        "verified_at",
+    )
+
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 25
+
+    autocomplete_fields = (
+        "lead",
+    )
+
+    fieldsets = (
+        (
+            "Lead Information",
+            {
+                "fields": (
+                    "lead",
+                )
+            }
+        ),
+        (
+            "OTP Details",
+            {
+                "fields": (
+                    "otp_code",
+                    "is_verified",
+                    "attempt_count",
+                )
+            }
+        ),
+        (
+            "Verification Timing",
+            {
+                "fields": (
+                    "expires_at",
+                    "verified_at",
+                )
+            }
+        ),
+        (
+            "System Information",
+            {
+                "fields": (
+                    "id",
+                    "created_at",
+                    "updated_at",
+                )
+            }
+        ),
+    )
+
+    @admin.display(
+        description="Expired",
+        boolean=True
+    )
+    def is_expired_status(self, obj):
+        return obj.is_expired()

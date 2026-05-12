@@ -138,6 +138,23 @@ from jeblioweb_backend.utils.email import send_email
 import threading
 
 
+import threading
+import logging
+
+from django.db import transaction
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from cashfree_pg.api_client import Cashfree
+from cashfree_pg.models.create_order_request import CreateOrderRequest
+
+from webinar.models import WebinarLead, WebinarRegistration
+
+
+logger = logging.getLogger(__name__)
+
+
 @api_view(["POST"])
 def verify_payment(request):
 
@@ -146,9 +163,12 @@ def verify_payment(request):
         order_id = request.data.get("order_id")
 
         if not order_id:
-            return Response({
-                "error": "Order ID is required"
-            }, status=400)
+            return Response(
+                {
+                    "error": "Order ID is required"
+                },
+                status=400
+            )
 
         # =========================
         # GET LEAD
@@ -159,9 +179,12 @@ def verify_payment(request):
         ).first()
 
         if not lead:
-            return Response({
-                "error": "Invalid order"
-            }, status=404)
+            return Response(
+                {
+                    "error": "Invalid order"
+                },
+                status=404
+            )
 
         # =========================
         # CASHFREE ENVIRONMENT
@@ -198,16 +221,18 @@ def verify_payment(request):
                 lead.payment_status = "PAID"
                 lead.save()
 
-                # PREVENT DUPLICATES
+                # CHECK EXISTING REGISTRATION
                 existing_registration = WebinarRegistration.objects.filter(
                     order_id=order_id
                 ).first()
 
                 if existing_registration:
+
                     return Response({
                         "status": "already_saved"
                     })
 
+                # CREATE REGISTRATION
                 registration = WebinarRegistration.objects.create(
                     name=lead.name,
                     email=lead.email,
@@ -219,39 +244,143 @@ def verify_payment(request):
                 )
 
             # =========================
-            # SEND EMAIL
+            # SEND EMAILS
             # =========================
 
-            def send_user_email():
+            def send_emails():
 
-                message = f"""
-                <h2>🎉 Registration Successful!</h2>
+                try:
 
-                <p>Hi <b>{registration.name}</b>,</p>
+                    # =========================
+                    # USER EMAIL
+                    # =========================
 
-                <p>Your webinar registration is confirmed.</p>
+                    user_message = f"""
+                    <h2>🎉 Registration Successful!</h2>
 
-                <p>📅 April 26 | ⏰ 6 PM IST</p>
+                    <p>Hi <b>{registration.name}</b>,</p>
 
-                <br>
+                    <p>Your webinar registration is confirmed successfully.</p>
 
-                <a href="https://chat.whatsapp.com/DuBbqW4KiBRJYARS64x57K">
-                    Join WhatsApp Group
-                </a>
+                    <p>
+                        📅 <b>April 26</b><br>
+                        ⏰ <b>6 PM IST</b>
+                    </p>
 
-                <br><br>
+                    <br>
 
-                <p>— Jeblio Team</p>
-                """
+                    <a 
+                        href="https://chat.whatsapp.com/DuBbqW4KiBRJYARS64x57K"
+                        style="
+                            background:#25D366;
+                            color:white;
+                            padding:12px 20px;
+                            text-decoration:none;
+                            border-radius:8px;
+                            display:inline-block;
+                            font-weight:bold;
+                        "
+                    >
+                        Join WhatsApp Group
+                    </a>
 
-                send_email(
-                    to_email=registration.email,
-                    subject="Webinar Registration Confirmed 🚀",
-                    message=message
-                )
+                    <br><br>
+
+                    <p>We’re excited to have you with us 🚀</p>
+
+                    <br>
+
+                    <p>— Team Jeblio</p>
+                    """
+
+                    send_email(
+                        to_email=registration.email,
+                        subject="Webinar Registration Confirmed 🚀",
+                        message=user_message
+                    )
+
+                    # =========================
+                    # ADMIN EMAIL
+                    # =========================
+
+                    admin_message = f"""
+                    <h2>📢 New Webinar Registration</h2>
+
+                    <p>A new user has successfully registered.</p>
+
+                    <br>
+
+                    <table 
+                        border="1"
+                        cellpadding="10"
+                        cellspacing="0"
+                        style="
+                            border-collapse:collapse;
+                            width:100%;
+                            max-width:700px;
+                        "
+                    >
+
+                        <tr>
+                            <td><b>Name</b></td>
+                            <td>{registration.name}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Email</b></td>
+                            <td>{registration.email}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Phone</b></td>
+                            <td>{registration.phone}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Order ID</b></td>
+                            <td>{registration.order_id}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Payment ID</b></td>
+                            <td>{registration.payment_id}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Payment Status</b></td>
+                            <td>{registration.payment_status}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Payment Method</b></td>
+                            <td>{registration.payment_method}</td>
+                        </tr>
+
+                    </table>
+
+                    <br>
+
+                    <p>
+                        ✅ Payment completed successfully and registration saved.
+                    </p>
+
+                    <br>
+
+                    <p>— Jeblio System</p>
+                    """
+
+                    send_email(
+                        to_email=settings.ADMIN_EMAIL,
+                        subject="New Webinar Registration 🔥",
+                        message=admin_message
+                    )
+
+                except Exception:
+
+                    logger.exception("EMAIL SENDING ERROR")
 
             threading.Thread(
-                target=send_user_email,
+                target=send_emails,
                 daemon=True
             ).start()
 
@@ -266,14 +395,20 @@ def verify_payment(request):
         lead.payment_status = "FAILED"
         lead.save()
 
-        return Response({
-            "status": "failed"
-        }, status=400)
+        return Response(
+            {
+                "status": "failed"
+            },
+            status=400
+        )
 
-    except Exception as e:
+    except Exception:
 
         logger.exception("VERIFY PAYMENT ERROR")
 
-        return Response({
-            "error": "Payment verification failed"
-        }, status=500)
+        return Response(
+            {
+                "error": "Payment verification failed"
+            },
+            status=500
+        )
