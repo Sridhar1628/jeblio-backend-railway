@@ -1,54 +1,102 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-import threading
-from .models import TermsAndConditions
 from django.conf import settings
 from urllib.parse import urlencode
-
+from django.db import transaction
 
 from cashfree_pg.api_client import Cashfree
 from cashfree_pg.models.create_order_request import CreateOrderRequest
 from cashfree_pg.models.customer_details import CustomerDetails
 from cashfree_pg.models.order_meta import OrderMeta
 
+from .models import WebinarLead
+
 import uuid
-from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def create_order(request):
 
-    data = request.data
-
-    order_id = str(uuid.uuid4())
-
-    customer_details = CustomerDetails(
-        customer_id=order_id,
-        customer_name=data.get("name"),
-        customer_email=data.get("email"),
-        customer_phone=data.get("phone"),
-    )
-
-    query_params = urlencode({
-        "order_id": order_id,
-        "name": data.get("name"),
-        "email": data.get("email"),
-        "phone": data.get("phone"),
-    })
-
-    order_meta = OrderMeta(
-        return_url=f"{settings.FRONTEND_URL}/success?{query_params}"
-    )
-
-    create_order_request = CreateOrderRequest(
-        order_amount=49.0,
-        order_currency="INR",
-        customer_details=customer_details,
-        order_id=order_id,
-        order_meta=order_meta
-    )
-
     try:
+
+        data = request.data
+
+        name = data.get("name")
+        email = data.get("email")
+        phone = data.get("phone")
+
+        # =========================
+        # VALIDATION
+        # =========================
+
+        if not name or not email or not phone:
+            return Response({
+                "error": "All fields are required"
+            }, status=400)
+
+        # =========================
+        # PREVENT DUPLICATE PAID USERS
+        # =========================
+
+        already_paid = WebinarLead.objects.filter(
+            email=email,
+            payment_status="PAID"
+        ).exists()
+
+        if already_paid:
+            return Response({
+                "error": "You are already registered"
+            }, status=400)
+
+        order_id = str(uuid.uuid4())
+
+        # =========================
+        # SAVE LEAD BEFORE PAYMENT
+        # =========================
+
+        with transaction.atomic():
+
+            WebinarLead.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                order_id=order_id,
+                payment_status="PENDING"
+            )
+
+        # =========================
+        # CASHFREE CUSTOMER
+        # =========================
+
+        customer_details = CustomerDetails(
+            customer_id=order_id,
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+        )
+
+        query_params = urlencode({
+            "order_id": order_id
+        })
+
+        order_meta = OrderMeta(
+            return_url=f"{settings.FRONTEND_URL}/success?{query_params}"
+        )
+
+        create_order_request = CreateOrderRequest(
+            order_amount=49.0,
+            order_currency="INR",
+            customer_details=customer_details,
+            order_id=order_id,
+            order_meta=order_meta
+        )
+
+        # =========================
+        # CASHFREE ENVIRONMENT
+        # =========================
 
         environment = (
             Cashfree.PRODUCTION
@@ -74,23 +122,50 @@ def create_order(request):
 
     except Exception as e:
 
-        print("CASHFREE ERROR:", str(e))
+        logger.exception("CREATE ORDER ERROR")
 
         return Response({
-            "error": str(e)
-        }, status=400)
-    
+            "error": "Unable to create order"
+        }, status=500)    
 
 from .models import WebinarRegistration
 from jeblioweb_backend.utils.email import send_email
 
 
-@api_view(['POST'])
+from django.db import transaction
+from .models import WebinarRegistration
+from jeblioweb_backend.utils.email import send_email
+import threading
+
+
+@api_view(["POST"])
 def verify_payment(request):
 
-    order_id = request.data.get("order_id")
-
     try:
+
+        order_id = request.data.get("order_id")
+
+        if not order_id:
+            return Response({
+                "error": "Order ID is required"
+            }, status=400)
+
+        # =========================
+        # GET LEAD
+        # =========================
+
+        lead = WebinarLead.objects.filter(
+            order_id=order_id
+        ).first()
+
+        if not lead:
+            return Response({
+                "error": "Invalid order"
+            }, status=404)
+
+        # =========================
+        # CASHFREE ENVIRONMENT
+        # =========================
 
         environment = (
             Cashfree.PRODUCTION
@@ -111,32 +186,41 @@ def verify_payment(request):
 
         order_data = response.data
 
-        # ✅ CHECK PAYMENT STATUS
+        # =========================
+        # PAYMENT SUCCESS
+        # =========================
+
         if order_data.order_status == "PAID":
 
-            # Prevent duplicate save
-            existing = WebinarRegistration.objects.filter(
-                order_id=order_id
-            ).first()
+            with transaction.atomic():
 
-            if existing:
-                return Response({
-                    "status": "already_saved"
-                })
+                # UPDATE LEAD STATUS
+                lead.payment_status = "PAID"
+                lead.save()
 
-            registration = WebinarRegistration.objects.create(
-                name=request.data.get("name"),
-                email=request.data.get("email"),
-                phone=request.data.get("phone"),
-                payment_id=order_data.cf_order_id,
-                order_id=order_id,
-                payment_status=order_data.order_status,
-                payment_method="cashfree"
-            )
+                # PREVENT DUPLICATES
+                existing_registration = WebinarRegistration.objects.filter(
+                    order_id=order_id
+                ).first()
 
-            # ======================
-            # USER EMAIL
-            # ======================
+                if existing_registration:
+                    return Response({
+                        "status": "already_saved"
+                    })
+
+                registration = WebinarRegistration.objects.create(
+                    name=lead.name,
+                    email=lead.email,
+                    phone=lead.phone,
+                    payment_id=order_data.cf_order_id,
+                    order_id=order_id,
+                    payment_status=order_data.order_status,
+                    payment_method="cashfree"
+                )
+
+            # =========================
+            # SEND EMAIL
+            # =========================
 
             def send_user_email():
 
@@ -166,11 +250,21 @@ def verify_payment(request):
                     message=message
                 )
 
-            threading.Thread(target=send_user_email).start()
+            threading.Thread(
+                target=send_user_email,
+                daemon=True
+            ).start()
 
             return Response({
                 "status": "success"
             })
+
+        # =========================
+        # PAYMENT FAILED
+        # =========================
+
+        lead.payment_status = "FAILED"
+        lead.save()
 
         return Response({
             "status": "failed"
@@ -178,11 +272,8 @@ def verify_payment(request):
 
     except Exception as e:
 
-        print("VERIFY ERROR:", str(e))
+        logger.exception("VERIFY PAYMENT ERROR")
 
         return Response({
-            "error": str(e)
-        }, status=400)
-    
-    # views.py
-
+            "error": "Payment verification failed"
+        }, status=500)
