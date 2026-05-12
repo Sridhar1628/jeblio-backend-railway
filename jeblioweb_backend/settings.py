@@ -216,3 +216,6 @@ CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID")
 CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY")
 
 CASHFREE_ENVIRONMENT = "SANDBOX"
+
+
+ADMIN_EMAIL = "jeblioinfo@gmail.com"
