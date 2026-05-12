@@ -385,7 +385,8 @@ def verify_payment(request):
             ).start()
 
             return Response({
-                "status": "success"
+                "status": "success",
+                "name": registration.name
             })
 
         # =========================
