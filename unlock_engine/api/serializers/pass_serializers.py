@@ -55,6 +55,7 @@ class CreatePassSerializer(BaseModelSerializer):
 
     class Meta:
         model = Pass
+
         exclude = [
             'id',
             'uuid',
@@ -67,6 +68,24 @@ class CreatePassSerializer(BaseModelSerializer):
             'updated_at',
         ]
 
+    def create(
+        self,
+        validated_data
+    ):
+
+        from unlock_engine.services.pass_generation_service import (
+            PassGenerationService
+        )
+
+        service = (
+            PassGenerationService()
+        )
+
+        qr_pass = service.create_pass(
+            validated_data
+        )
+
+        return qr_pass
 
 class UpdatePassSerializer(BaseModelSerializer):
 
@@ -84,3 +103,56 @@ class UpdatePassSerializer(BaseModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+class BulkGeneratePassSerializer(
+    serializers.Serializer
+):
+
+    campaign = serializers.IntegerField()
+
+    quantity = serializers.IntegerField(
+        min_value=1,
+        max_value=500
+    )
+
+    expiry_date = serializers.DateTimeField(
+        required=False,
+        allow_null=True
+    )
+
+    distribution_source = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    distributed_by = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    distribution_region = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    distribution_college = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    template_version = serializers.CharField(
+        required=False,
+        default="v1"
+    )
+
+class ExportPassZipSerializer(
+    serializers.Serializer
+):
+
+    campaign = serializers.IntegerField()
+
+class ExportPassPDFSerializer(
+    serializers.Serializer
+):
+
+    campaign = serializers.IntegerField()

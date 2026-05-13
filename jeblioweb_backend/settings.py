@@ -23,6 +23,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
+    "jeblio.com",
+    "www.jeblio.com",
     "jeblio-website-backend.onrender.com",
     "jeblio-website.onrender.com",
     "localhost",
@@ -163,8 +165,9 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 # CORS SETTINGS
 # ======================
 CORS_ALLOWED_ORIGINS = [
-    "https://jeblio-website.onrender.com",
     "https://jeblio.com",
+    "https://www.jeblio.com",
+    "https://jeblio-website.onrender.com",
     "http://localhost:3000"
 ]
 

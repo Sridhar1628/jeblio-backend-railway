@@ -17,6 +17,10 @@ from unlock_engine.utils.scan_tracker import (
     track_pass_scan
 )
 
+from unlock_engine.services.otp_service import (
+    OTPService
+)
+
 from rest_framework.views import APIView
 
 from unlock_engine.utils.reward_engine import (
@@ -97,6 +101,16 @@ class LeadListCreateAPIView(
 
         track_pass_scan(qr_pass)
 
+        # =========================
+        # SEND OTP
+        # =========================
+
+        otp_service = OTPService()
+
+        otp_service.send_otp(
+            lead
+        )
+
         return Response(
             LeadSerializer(lead).data,
             status=status.HTTP_201_CREATED
@@ -157,6 +171,44 @@ class ClaimRewardAPIView(APIView):
                 {
                     "error": (
                         "Campaign is inactive"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # =========================
+        # CAMPAIGN EXPIRY CHECK
+        # =========================
+
+        campaign = lead.campaign
+
+        if (
+            campaign.expiry_date and
+            campaign.expiry_date < timezone.now()
+        ):
+
+            return Response(
+                {
+                    "error": (
+                        "This campaign has expired"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # =========================
+        # PASS CLAIM RECHECK
+        # =========================
+
+        qr_pass = lead.qr_pass
+
+        if qr_pass and qr_pass.is_claimed:
+
+            return Response(
+                {
+                    "error": (
+                        "This pass has already "
+                        "been claimed"
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST
