@@ -413,3 +413,92 @@ def verify_payment(request):
             },
             status=500
         )
+
+@api_view(["POST"])
+def register_webinar(request):
+
+    try:
+
+        data = request.data
+
+        name = data.get("name")
+        email = data.get("email")
+        phone = data.get("phone")
+
+        # =========================
+        # VALIDATION
+        # =========================
+
+        if not name or not email or not phone:
+            return Response({
+                "error": "All fields are required"
+            }, status=400)
+
+        # =========================
+        # PREVENT DUPLICATES
+        # =========================
+
+        already_registered = WebinarRegistration.objects.filter(
+            email=email
+        ).exists()
+
+        if already_registered:
+            return Response({
+                "error": "You are already registered"
+            }, status=400)
+
+        # =========================
+        # SAVE REGISTRATION
+        # =========================
+
+        registration = WebinarRegistration.objects.create(
+            name=name,
+            email=email,
+            phone=phone,
+            payment_status="FREE",
+            payment_method="FREE"
+        )
+
+        # =========================
+        # SEND EMAIL (OPTIONAL)
+        # =========================
+
+        user_message = f"""
+        <h2>🎉 Registration Successful!</h2>
+
+        <p>Hi <b>{registration.name}</b>,</p>
+
+        <p>Your webinar registration is confirmed successfully.</p>
+
+        <p>
+            📅 <b>May 15</b><br>
+            ⏰ <b>6:30 PM IST</b>
+        </p>
+
+        <br>
+
+        <p>We’re excited to have you 🚀</p>
+
+        <br>
+
+        <p>— Team Jeblio</p>
+        """
+
+        send_email(
+            to_email=registration.email,
+            subject="Webinar Registration Confirmed 🚀",
+            message=user_message
+        )
+
+        return Response({
+            "status": "success",
+            "name": registration.name
+        })
+
+    except Exception as e:
+
+        logger.exception("FREE REGISTRATION ERROR")
+
+        return Response({
+            "error": "Registration failed"
+        }, status=500)
