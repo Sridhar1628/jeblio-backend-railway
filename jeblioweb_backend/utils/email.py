@@ -1,4 +1,4 @@
-import os
+from django.conf import settings
 import logging
 
 from sendgrid import SendGridAPIClient
@@ -18,13 +18,33 @@ def send_email(to_email, subject, message, attachment=None):
 
     try:
 
-        api_key = os.getenv("SENDGRID_API_KEY")
+        print("📨 SENDGRID EMAIL STARTED")
+
+        # ======================
+        # CHECK API KEY
+        # ======================
+
+        api_key = settings.SENDGRID_API_KEY
+
+        print("🔑 API KEY EXISTS:", bool(api_key))
 
         if not api_key:
+
             logger.error("SENDGRID_API_KEY not found")
+
+            print("❌ SENDGRID_API_KEY NOT FOUND")
+
             return False
 
+        # ======================
+        # SENDGRID CLIENT
+        # ======================
+
         sg = SendGridAPIClient(api_key)
+
+        # ======================
+        # EMAIL OBJECT
+        # ======================
 
         email = Mail(
             from_email="jeblioinfo@gmail.com",
@@ -58,8 +78,8 @@ def send_email(to_email, subject, message, attachment=None):
             f"Email sent successfully to {to_email} | Status: {response.status_code}"
         )
 
-        print("✅ EMAIL SENT")
-        print("STATUS CODE:", response.status_code)
+        print("✅ EMAIL SENT SUCCESSFULLY")
+        print("📩 STATUS CODE:", response.status_code)
 
         return True
 
@@ -67,6 +87,7 @@ def send_email(to_email, subject, message, attachment=None):
 
         logger.exception("SENDGRID EMAIL ERROR")
 
-        print("❌ EMAIL ERROR:", str(e))
+        print("❌ SENDGRID EMAIL FAILED")
+        print("ERROR:", str(e))
 
         return False

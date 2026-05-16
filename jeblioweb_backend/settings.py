@@ -172,7 +172,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ❌ NO SMTP HERE
 # ✅ SendGrid handled via utils/email.py
 
+print("SENDGRID_API_KEY LOADED:", bool(SENDGRID_API_KEY))
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+
+
 
 # ======================
 # CORS SETTINGS
