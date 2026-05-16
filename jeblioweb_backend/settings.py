@@ -192,6 +192,9 @@ CORS_EXPOSE_HEADERS = ["Content-Type"]
 # CSRF
 # ======================
 CSRF_TRUSTED_ORIGINS = [
+    "https://jeblio.com",
+    "https://www.jeblio.com",
+    "https://api.jeblio.com",
     "https://jeblio-website.onrender.com",
     "https://jeblio-website-backend.onrender.com",
 ]
