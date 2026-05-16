@@ -414,12 +414,31 @@ def verify_payment(request):
             status=500
         )
 
+import threading
+import logging
+
+from django.db import transaction
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .models import WebinarRegistration
+from jeblioweb_backend.utils.email import send_email
+
+
+logger = logging.getLogger(__name__)
+
+
 @api_view(["POST"])
 def register_webinar(request):
 
     try:
 
+        print("🚀 FREE WEBINAR REGISTRATION API CALLED")
+
         data = request.data
+
+        print("📩 REQUEST DATA:", data)
 
         name = data.get("name")
         email = data.get("email")
@@ -430,8 +449,23 @@ def register_webinar(request):
         # =========================
 
         if not name or not email or not phone:
+
+            print("❌ VALIDATION FAILED")
+
             return Response({
                 "error": "All fields are required"
+            }, status=400)
+
+        # =========================
+        # PHONE VALIDATION
+        # =========================
+
+        if not str(phone).isdigit() or len(str(phone)) != 10:
+
+            print("❌ INVALID PHONE NUMBER")
+
+            return Response({
+                "error": "Enter valid 10 digit mobile number"
             }, status=400)
 
         # =========================
@@ -443,6 +477,9 @@ def register_webinar(request):
         ).exists()
 
         if already_registered:
+
+            print("⚠️ USER ALREADY REGISTERED")
+
             return Response({
                 "error": "You are already registered"
             }, status=400)
@@ -451,16 +488,21 @@ def register_webinar(request):
         # SAVE REGISTRATION
         # =========================
 
-        registration = WebinarRegistration.objects.create(
-            name=name,
-            email=email,
-            phone=phone,
-            payment_status="FREE",
-            payment_method="FREE"
-        )
+        with transaction.atomic():
+
+            registration = WebinarRegistration.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                payment_status="FREE",
+                payment_method="FREE"
+            )
+
+        print("✅ REGISTRATION SAVED")
+        print("🆔 REGISTRATION ID:", registration.id)
 
         # =========================
-        # SEND EMAIL (OPTIONAL)
+        # EMAIL HTML
         # =========================
 
         user_message = f"""
@@ -477,6 +519,23 @@ def register_webinar(request):
 
         <br>
 
+        <a
+            href="https://chat.whatsapp.com/DuBbqW4KiBRJYARS64x57K"
+            style="
+                background:#25D366;
+                color:white;
+                padding:12px 20px;
+                text-decoration:none;
+                border-radius:8px;
+                display:inline-block;
+                font-weight:bold;
+            "
+        >
+            Join WhatsApp Group
+        </a>
+
+        <br><br>
+
         <p>We’re excited to have you 🚀</p>
 
         <br>
@@ -484,21 +543,53 @@ def register_webinar(request):
         <p>— Team Jeblio</p>
         """
 
-        send_email(
-            to_email=registration.email,
-            subject="Webinar Registration Confirmed 🚀",
-            message=user_message
-        )
+        # =========================
+        # SEND EMAIL THREAD
+        # =========================
+
+        def send_registration_email():
+
+            try:
+
+                print("📨 EMAIL SENDING STARTED")
+                print("📧 TO:", registration.email)
+
+                result = send_email(
+                    to_email=registration.email,
+                    subject="Webinar Registration Confirmed 🚀",
+                    message=user_message
+                )
+
+                print("✅ EMAIL FUNCTION RESULT:", result)
+
+            except Exception as email_error:
+
+                print("❌ EMAIL SENDING FAILED")
+                print(str(email_error))
+
+                logger.exception("FREE REGISTRATION EMAIL ERROR")
+
+        threading.Thread(
+            target=send_registration_email,
+            daemon=True
+        ).start()
+
+        print("🚀 EMAIL THREAD STARTED")
 
         return Response({
             "status": "success",
+            "message": "Registration successful",
             "name": registration.name
         })
 
     except Exception as e:
 
+        print("❌ FREE REGISTRATION ERROR")
+        print(str(e))
+
         logger.exception("FREE REGISTRATION ERROR")
 
         return Response({
-            "error": "Registration failed"
+            "error": "Registration failed",
+            "details": str(e)
         }, status=500)

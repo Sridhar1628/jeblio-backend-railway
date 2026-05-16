@@ -1,4 +1,6 @@
 import os
+import logging
+
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import (
     Mail,
@@ -9,13 +11,23 @@ from sendgrid.helpers.mail import (
     Disposition
 )
 
+logger = logging.getLogger(__name__)
+
 
 def send_email(to_email, subject, message, attachment=None):
+
     try:
-        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+
+        api_key = os.getenv("SENDGRID_API_KEY")
+
+        if not api_key:
+            logger.error("SENDGRID_API_KEY not found")
+            return False
+
+        sg = SendGridAPIClient(api_key)
 
         email = Mail(
-            from_email='no-reply@jeblio.com',  # must be verified in SendGrid
+            from_email="jeblioinfo@gmail.com",
             to_emails=to_email,
             subject=subject,
             html_content=message
@@ -24,21 +36,37 @@ def send_email(to_email, subject, message, attachment=None):
         # ======================
         # ATTACHMENT SUPPORT
         # ======================
+
         if attachment:
+
             attached_file = Attachment(
-                FileContent(attachment["content"]),   # base64 encoded
+                FileContent(attachment["content"]),
                 FileName(attachment["filename"]),
                 FileType(attachment["type"]),
                 Disposition(attachment["disposition"])
             )
-            email.attachment = attached_file   # IMPORTANT
+
+            email.attachment = attached_file
 
         # ======================
         # SEND EMAIL
         # ======================
+
         response = sg.send(email)
 
-        print("✅ Email sent:", response.status_code)
+        logger.info(
+            f"Email sent successfully to {to_email} | Status: {response.status_code}"
+        )
+
+        print("✅ EMAIL SENT")
+        print("STATUS CODE:", response.status_code)
+
+        return True
 
     except Exception as e:
-        print("❌ Email failed:", str(e))
+
+        logger.exception("SENDGRID EMAIL ERROR")
+
+        print("❌ EMAIL ERROR:", str(e))
+
+        return False
