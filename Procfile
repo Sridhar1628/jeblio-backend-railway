@@ -1,0 +1,1 @@
+web: gunicorn jeblioweb_backend.wsgi
