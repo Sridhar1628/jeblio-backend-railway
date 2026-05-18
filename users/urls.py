@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CreateSuperUserView
+from .views import CreateSuperUserView, test_db
 
 urlpatterns = [
     path(
@@ -7,4 +7,5 @@ urlpatterns = [
         CreateSuperUserView.as_view(),
         name="create-superuser",
     ),
+    path("test-db/", test_db),
 ]

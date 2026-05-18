@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/', include('chatbot.urls')),
     path('api/webinar/', include('webinar.urls')),
     path('api/unlock-engine/', include('unlock_engine.api.urls')),
+    path('api/users/', include('users.urls')),
 
 
 ]

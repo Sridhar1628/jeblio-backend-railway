@@ -39,3 +39,17 @@ class CreateSuperUserView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
+from django.http import HttpResponse
+from django.db import connection
+
+def test_db(request):
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT version();")
+        row = cursor.fetchone()
+
+        return HttpResponse(f"Connected to DB: {row}")
+
+    except Exception as e:
+        return HttpResponse(f"DB Error: {str(e)}")
