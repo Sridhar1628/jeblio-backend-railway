@@ -8,7 +8,6 @@ import os
 
 
 load_dotenv()
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 # ======================
@@ -167,14 +166,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ======================
-# SENDGRID (EMAIL)
+# SENDGRID EMAIL
 # ======================
-# ❌ NO SMTP HERE
-# ✅ SendGrid handled via utils/email.py
 
-print("SENDGRID_API_KEY LOADED:", bool(SENDGRID_API_KEY))
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+
+DEFAULT_FROM_EMAIL = "noreply@jeblio.com"
+
+print("SENDGRID LOADED:", bool(SENDGRID_API_KEY))
 
 
 # ======================
