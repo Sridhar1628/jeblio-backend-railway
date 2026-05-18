@@ -47,7 +47,7 @@ def send_email(to_email, subject, message, attachment=None):
         # ======================
 
         email = Mail(
-            from_email="jeblioinfo@gmail.com",
+            from_email="noreply@jeblio.com",
             to_emails=to_email,
             subject=subject,
             html_content=message
